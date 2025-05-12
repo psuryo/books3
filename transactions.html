@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --danger-color: #e74a3b;
+        }
+
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .transaction-card {
+            transition: all 0.3s ease;
+        }
+
+        .transaction-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h1 class="h3 text-gray-800">
+                    <i class="fas fa-exchange-alt me-2"></i>Transaction Management
+                </h1>
+            </div>
+        </div>
+
+        <!-- Transaction Actions -->
+        <div class="row">
+            <!-- Borrow Book Card -->
+            <div class="col-md-6 mb-4">
+                <div class="card transaction-card h-100">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-book-reader me-1"></i> Borrow Book
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/transactions/borrow}" method="post">
+                            <div class="mb-3">
+                                <label for="userId" class="form-label">User ID</label>
+                                <input type="number" class="form-control" id="userId" name="userId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bookId" class="form-label">Book ID</label>
+                                <input type="number" class="form-control" id="bookId" name="bookId" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-hand-holding me-1"></i> Process Borrow
+                            </button>
+                        </form>
+                        <div th:if="${borrowSuccess}" class="alert alert-success mt-3" th:text="${borrowSuccess}"></div>
+                        <div th:if="${borrowError}" class="alert alert-danger mt-3" th:text="${borrowError}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Return Book Card -->
+            <div class="col-md-6 mb-4">
+                <div class="card transaction-card h-100">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-book-return me-1"></i> Return Book
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/transactions/return}" method="post">
+                            <div class="mb-3">
+                                <label for="transactionId" class="form-label">Transaction ID</label>
+                                <input type="number" class="form-control" id="transactionId" name="transactionId"
+                                    required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-undo-alt me-1"></i> Process Return
+                            </button>
+                        </form>
+                        <div th:if="${returnSuccess}" class="alert alert-success mt-3" th:text="${returnSuccess}"></div>
+                        <div th:if="${returnError}" class="alert alert-danger mt-3" th:text="${returnError}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Transactions Table -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Active Transactions</h6>
+                <span class="badge bg-primary rounded-pill">
+                    <span th:text="${activeTransactions != null ? activeTransactions.size() : 0}"></span> active
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>User</th>
+                                <th>Book</th>
+                                <th>Borrow Date</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tx : ${activeTransactions}">
+                                <td th:text="${tx.id}"></td>
+                                <td th:text="${tx.userId}"></td>
+                                <td th:text="${tx.bookId}"></td>
+                                <td th:text="${#temporals.format(tx.borrowDate, 'yyyy-MM-dd')}"></td>
+                                <td th:text="${#temporals.format(tx.returnDate, 'yyyy-MM-dd')}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Optional: Add this if you want to enhance form submission with AJAX -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Enhance form submission with SweetAlerts
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: new URLSearchParams(formData)
+                    })
+                        .then(response => response.text())
+                        .then(message => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: message,
+                            });
+                            setTimeout(() => location.reload(), 1500);
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: error.message
+                            });
+                        });
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
